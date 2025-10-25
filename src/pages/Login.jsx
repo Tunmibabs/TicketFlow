@@ -1,52 +1,72 @@
-"use client";
-
 import React from "react";
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { useErrorHandler } from "../hooks/useErrorHandler";
+import { ERROR_MESSAGES } from "../utils/errorMessages";
 
-// interface LoginPageProps {
-//   setIsAuthenticated: (value: boolean) => void
-// }
-
-function Login({ setIsAuthenticated }) {
+export default function Login({ setIsAuthenticated }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { handleError } = useErrorHandler();
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setError("");
+  const validateForm = () => {
+    const newErrors = {};
 
-    if (!email || !password) {
-      setError("Please fill in all fields");
-      return;
+    if (!email.trim()) {
+      newErrors.email = ERROR_MESSAGES.FORM_EMPTY_EMAIL;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email = ERROR_MESSAGES.FORM_INVALID_EMAIL;
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError("Please enter a valid email");
-      return;
+    if (!password) {
+      newErrors.password = ERROR_MESSAGES.FORM_EMPTY_PASSWORD;
     }
 
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-    const user = users.find(
-      (u) => u.email === email && u.password === password
-    );
-
-    if (!user) {
-      setError("Invalid email or password");
-      return;
-    }
-
-    const token = Math.random().toString(36).substr(2);
-    localStorage.setItem("authToken", token);
-    localStorage.setItem(
-      "currentUser",
-      JSON.stringify({ email: user.email, id: user.id })
-    );
-    setIsAuthenticated(true);
-    navigate("/dashboard");
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setErrors({});
+
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      const users = JSON.parse(localStorage.getItem("users") || "[]");
+      const user = users.find(
+        (u) => u.email === email && u.password === password
+      );
+
+      if (!user) {
+        setErrors({ general: ERROR_MESSAGES.AUTH_INVALID_CREDENTIALS });
+        return;
+      }
+
+      const token = Math.random().toString(36).substr(2);
+      localStorage.setItem("authToken", token);
+      localStorage.setItem(
+        "currentUser",
+        JSON.stringify({ email: user.email, id: user.id })
+      );
+      setIsAuthenticated(true);
+      navigate("/dashboard");
+    } catch (error) {
+      handleError(error, { showToast: true });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] flex items-center justify-center px-4">
       <div className="w-full max-w-md">
@@ -60,9 +80,9 @@ function Login({ setIsAuthenticated }) {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
+          {errors.general && (
             <div className="p-4 rounded-lg bg-[var(--destructive)]/10 border border-[var(--destructive)] text-[var(--destructive)]">
-              {error}
+              {errors.general}
             </div>
           )}
 
@@ -71,10 +91,27 @@ function Login({ setIsAuthenticated }) {
             <input
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)]"
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (errors.email) setErrors({ ...errors, email: undefined });
+              }}
+              className={`w-full px-4 py-2 rounded-lg bg-[var(--card)] border text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)] ${
+                errors.email
+                  ? "border-[var(--destructive)]"
+                  : "border-[var(--border)]"
+              }`}
               placeholder="you@example.com"
+              aria-invalid={!!errors.email}
+              aria-describedby={errors.email ? "email-error" : undefined}
             />
+            {errors.email && (
+              <p
+                id="email-error"
+                className="text-sm text-[var(--destructive)] mt-1"
+              >
+                {errors.email}
+              </p>
+            )}
           </div>
 
           <div>
@@ -82,17 +119,36 @@ function Login({ setIsAuthenticated }) {
             <input
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)]"
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (errors.password)
+                  setErrors({ ...errors, password: undefined });
+              }}
+              className={`w-full px-4 py-2 rounded-lg bg-[var(--card)] border text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)] ${
+                errors.password
+                  ? "border-[var(--destructive)]"
+                  : "border-[var(--border)]"
+              }`}
               placeholder="••••••••"
+              aria-invalid={!!errors.password}
+              aria-describedby={errors.password ? "password-error" : undefined}
             />
+            {errors.password && (
+              <p
+                id="password-error"
+                className="text-sm text-[var(--destructive)] mt-1"
+              >
+                {errors.password}
+              </p>
+            )}
           </div>
 
           <button
             type="submit"
-            className="w-full py-2 rounded-lg bg-[var(--primary)] text-[var(--primary-foreground)] font-semibold hover:opacity-90 transition-opacity"
+            disabled={isLoading}
+            className="w-full py-2 rounded-lg bg-[var(--primary)] text-[var(--primary-foreground)] font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Sign In
+            {isLoading ? "Signing in..." : "Sign In"}
           </button>
         </form>
 
@@ -106,4 +162,3 @@ function Login({ setIsAuthenticated }) {
     </div>
   );
 }
-export default Login;

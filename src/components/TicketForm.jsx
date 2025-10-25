@@ -1,10 +1,14 @@
 import React from "react";
 import { useState, useEffect } from "react";
+import { useErrorHandler } from "../hooks/useErrorHandler";
+import { ERROR_MESSAGES } from "../utils/errorMessages";
 
-function TicketForm({ onSubmit, initialData, onCancel }) {
+export default function TicketForm({ onSubmit, initialData, onCancel }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState("open");
+  const [errors, setErrors] = useState({});
+  const { handleValidationError } = useErrorHandler();
 
   useEffect(() => {
     if (initialData) {
@@ -14,24 +18,44 @@ function TicketForm({ onSubmit, initialData, onCancel }) {
     }
   }, [initialData]);
 
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!title.trim()) {
+      newErrors.title = ERROR_MESSAGES.FORM_EMPTY_TITLE;
+    }
+
+    if (!description.trim()) {
+      newErrors.description = ERROR_MESSAGES.FORM_EMPTY_DESCRIPTION;
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (!title.trim() || !description.trim()) {
-      alert("Please fill in all fields");
+    if (!validateForm()) {
       return;
     }
 
-    onSubmit({
-      title,
-      description,
-      status,
-    });
+    try {
+      onSubmit({
+        title: title.trim(),
+        description: description.trim(),
+        status,
+      });
 
-    setTitle("");
-    setDescription("");
-    setStatus("open");
+      setTitle("");
+      setDescription("");
+      setStatus("open");
+      setErrors({});
+    } catch (error) {
+      handleValidationError("DATA_SAVE_FAILED");
+    }
   };
+
   return (
     <form
       onSubmit={handleSubmit}
@@ -47,21 +71,58 @@ function TicketForm({ onSubmit, initialData, onCancel }) {
           <input
             type="text"
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full px-4 py-2 rounded-lg bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)]"
+            onChange={(e) => {
+              setTitle(e.target.value);
+              if (errors.title) setErrors({ ...errors, title: undefined });
+            }}
+            className={`w-full px-4 py-2 rounded-lg bg-[var(--background)] border text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)] ${
+              errors.title
+                ? "border-[var(--destructive)]"
+                : "border-[var(--border)]"
+            }`}
             placeholder="Ticket title"
+            aria-invalid={!!errors.title}
+            aria-describedby={errors.title ? "title-error" : undefined}
           />
+          {errors.title && (
+            <p
+              id="title-error"
+              className="text-sm text-[var(--destructive)] mt-1"
+            >
+              {errors.title}
+            </p>
+          )}
         </div>
 
         <div>
           <label className="block text-sm font-medium mb-2">Description</label>
           <textarea
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="w-full px-4 py-2 rounded-lg bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)] resize-none"
+            onChange={(e) => {
+              setDescription(e.target.value);
+              if (errors.description)
+                setErrors({ ...errors, description: undefined });
+            }}
+            className={`w-full px-4 py-2 rounded-lg bg-[var(--background)] border text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)] resize-none ${
+              errors.description
+                ? "border-[var(--destructive)]"
+                : "border-[var(--border)]"
+            }`}
             rows={4}
             placeholder="Ticket description"
+            aria-invalid={!!errors.description}
+            aria-describedby={
+              errors.description ? "description-error" : undefined
+            }
           />
+          {errors.description && (
+            <p
+              id="description-error"
+              className="text-sm text-[var(--destructive)] mt-1"
+            >
+              {errors.description}
+            </p>
+          )}
         </div>
 
         <div>
@@ -96,5 +157,3 @@ function TicketForm({ onSubmit, initialData, onCancel }) {
     </form>
   );
 }
-
-export default TicketForm;
