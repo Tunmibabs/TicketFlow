@@ -4,8 +4,7 @@ import { useState, useEffect } from "react";
 function TicketForm({ onSubmit, initialData, onCancel }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [status, setStatus] =
-    (useState < "open") | "in-progress" | ("closed" > "open");
+  const [status, setStatus] = useState("open");
 
   useEffect(() => {
     if (initialData) {

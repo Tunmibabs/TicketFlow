@@ -1,10 +1,14 @@
 import "./App.css";
 import { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import ProtectedRoute from "./components/ProtectedRoute";
 import HomePage from "./pages/HomePage";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import Dashboard from "./pages/Dashboard";
+import TicketsPage from "./pages/TicketsPage";
+import AnalyticsPage from "./pages/AnalyticsPage";
+import SettingsPage from "./pages/SettingsPage";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -40,7 +44,31 @@ function App() {
           path="/dashboard"
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
-              {/* <DashboardPage setIsAuthenticated={setIsAuthenticated} /> */}
+              <Dashboard setIsAuthenticated={setIsAuthenticated} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/tickets"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <TicketsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/analytics"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <AnalyticsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <SettingsPage />
             </ProtectedRoute>
           }
         />
