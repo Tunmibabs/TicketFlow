@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: "Geist", "Geist Fallback";
+  --font-mono: "Geist Mono", "Geist Mono Fallback";
+}
+
+:root {
+  --background: #0f172a;
+  --foreground: #f1f5f9;
+  --card: #1e293b;
+  --card-foreground: #f1f5f9;
+  --primary: #3b82f6;
+  --primary-foreground: #0f172a;
+  --accent: #10b981;
+  --accent-foreground: #0f172a;
+  --muted: #64748b;
+  --muted-foreground: #cbd5e1;
+  --border: #334155;
+  --destructive: #ef4444;
+  --destructive-foreground: #fca5a5;
+  --status-open: #10b981;
+  --status-in-progress: #f59e0b;
+  --status-closed: #6b7280;
+}
+
+* {
+  @apply border-[var(--border)] outline-[var(--primary)]/50;
+}
+
+body {
+  @apply bg-[var(--background)] text-[var(--foreground)];
+}
