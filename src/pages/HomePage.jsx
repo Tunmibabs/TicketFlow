@@ -12,13 +12,13 @@ function HomePage() {
         <div className="flex gap-4">
           <Link
             to="/login"
-            className="px-6 py-2 rounded-lg text-[var(--foreground)] hover:bg-[var(--card)] transition-colors"
+            className="px-4 py-2 rounded-lg text-[var(--foreground)] hover:bg-[var(--card)] transition-colors"
           >
             Login
           </Link>
           <Link
             to="/signup"
-            className="px-6 py-2 rounded-lg bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90 transition-opacity"
+            className="px-4 py-2 rounded-lg bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90 transition-opacity"
           >
             Sign Up
           </Link>
